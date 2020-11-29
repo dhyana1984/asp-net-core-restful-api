@@ -34,7 +34,8 @@ namespace DotNetCoreFeatures
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         //配置中间件
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        //注意，这里可以注入ILogger
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
             //使用自定义的中间件, 需要调用IApplicationBuilder的UseMiddleware泛型方法
             //app.UseMiddleware<HttpMethodCheckMiddleware>();
@@ -57,6 +58,7 @@ namespace DotNetCoreFeatures
             {
                 Console.WriteLine("midware B");
                 await Task.Delay(500);
+                logger.LogInformation("this is a testing log");
                 await context.Response.WriteAsync("Hello World");
             });
 
