@@ -58,14 +58,31 @@ namespace DotNetCoreFeatures
             {
                 Console.WriteLine("midware B");
                 await Task.Delay(500);
-                logger.LogInformation("this is a testing log");
+                //12是自定义eventId, 在console输出中会带着
+                logger.LogInformation(12,"this is a testing log");
                 await context.Response.WriteAsync("Hello World");
             });
 
             
             if (env.IsDevelopment())
             {
+                //UseDeveloperExceptionPage只有在开发环境有效
                 app.UseDeveloperExceptionPage();
+            }
+
+            //如果在生产环境，需要用app.UseExceptionHandler
+            //这相当于是个全局try-catch机制
+            if (env.IsProduction())
+            {
+                //UseExceptionHandler的参数是个Action<IApplicationBuilder>的委托
+                app.UseExceptionHandler(errorApp =>
+                {
+                    errorApp.Run(async context =>
+                    {
+                        context.Response.ContentType = "text/plain;charset=utf-8";
+                        await context.Response.WriteAsync("Sorry, something is wrong"); 
+                    });
+                });
             }
 
             app.UseHttpsRedirection();
