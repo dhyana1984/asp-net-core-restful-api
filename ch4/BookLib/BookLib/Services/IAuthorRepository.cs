@@ -9,5 +9,6 @@ namespace BookLib.Services
         IEnumerable<AuthorDto> GetAuthors();
         AuthorDto GetAuthor(Guid authorId);
         bool IsAuthorExists(Guid authorId);
+        void AddAuthor(AuthorDto author);
     }
 }

@@ -12,6 +12,12 @@ namespace BookLib.Services
         {
         }
 
+        public void AddAuthor(AuthorDto author)
+        {
+            author.Id = Guid.NewGuid();
+            LibraryMockData.Current.Authors.Add(author);
+        }
+
         public AuthorDto GetAuthor(Guid authorId)
         {
             var author = LibraryMockData.Current.Authors.FirstOrDefault(au => au.Id == authorId);
