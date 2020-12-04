@@ -57,5 +57,17 @@ namespace BookLib.Controllers
             //第三个参数是authorDto本身，会作为这个Api的结果返回
             return CreatedAtRoute(nameof(GetAuthor), new { authorId = authorDto.Id }, authorDto);
         }
+
+        [HttpPost]
+        public IActionResult DeleteAuthor(Guid authorId)
+        {
+
+            AuthorRepository.RemoveAuthor(authorId);
+
+            //CreatedAtRoute方法是为了在新增authorDto之后返回对应的201状态码并且跳转到GetAuthor的路由
+            //第一个参数就是GetAuthor的路由名称，第二个参数是GetAuthor的参数，这两个参数会组合成一个GetAuthor的Api并且在Reponse的Location里面返回
+            //第三个参数是authorDto本身，会作为这个Api的结果返回
+            return CreatedAtRoute(nameof(GetAuthor), new { authorId = authorDto.Id }, authorDto);
+        }
     }
 }
