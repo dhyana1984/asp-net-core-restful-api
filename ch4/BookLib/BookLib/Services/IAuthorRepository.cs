@@ -10,5 +10,6 @@ namespace BookLib.Services
         AuthorDto GetAuthor(Guid authorId);
         bool IsAuthorExists(Guid authorId);
         void AddAuthor(AuthorDto author);
+        void DeleteAuthor(AuthorDto author);
     }
 }
