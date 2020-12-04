@@ -18,6 +18,12 @@ namespace BookLib.Services
             LibraryMockData.Current.Authors.Add(author);
         }
 
+        public void DeleteAuthor(AuthorDto author)
+        {
+            LibraryMockData.Current.Books.RemoveAll(book => book.AuthorId == author.Id);
+            LibraryMockData.Current.Authors.Remove(author);
+        }
+
         public AuthorDto GetAuthor(Guid authorId)
         {
             var author = LibraryMockData.Current.Authors.FirstOrDefault(au => au.Id == authorId);
