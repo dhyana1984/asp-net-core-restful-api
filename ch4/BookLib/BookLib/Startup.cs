@@ -35,9 +35,9 @@ namespace BookLib
             {
                 //此配置是当请求header里面acccept的格式不支持时，返回406
                 config.ReturnHttpNotAcceptable = true;
-                //将xml格式添加到OutputFormatters中，这样api返回时就可以支持请求header中accept是xml的请求
-                config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
-            });
+                //将xml格式添加到OutputFormatters中，这样api返回时就可以支持请求header中accept是xml的请求,并且返回xml格式数据
+                //config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+            }).AddXmlSerializerFormatters(); //直接把XmlSerializerOutputFormatter加到InFormatter和OutFormatter
 
             //services.AddControllers(options =>
             //{
