@@ -11,7 +11,7 @@ namespace BookLib.Migrations
                 name: "Authors",
                 columns: table => new
                 {
-                    Id = table.Column<byte[]>(nullable: false),
+                    Id = table.Column<Guid>(nullable: false),
                     Name = table.Column<string>(maxLength: 20, nullable: false),
                     BirthDate = table.Column<DateTimeOffset>(nullable: false),
                     BirthPlace = table.Column<string>(maxLength: 40, nullable: false),
@@ -26,11 +26,11 @@ namespace BookLib.Migrations
                 name: "Books",
                 columns: table => new
                 {
-                    Id = table.Column<byte[]>(nullable: false),
+                    Id = table.Column<Guid>(nullable: false),
                     Title = table.Column<string>(maxLength: 100, nullable: false),
                     Description = table.Column<string>(maxLength: 500, nullable: true),
                     Pages = table.Column<int>(nullable: false),
-                    AuthorId = table.Column<byte[]>(nullable: false)
+                    AuthorId = table.Column<Guid>(nullable: false)
                 },
                 constraints: table =>
                 {

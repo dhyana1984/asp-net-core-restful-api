@@ -1,4 +1,5 @@
 using System.Linq;
+using AutoMapper;
 using BookLib.Entities;
 using BookLib.Services;
 using Microsoft.AspNetCore.Builder;
@@ -36,34 +37,14 @@ namespace BookLib
                 config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
             });
 
-            //services.AddControllers(options =>
-            //{
-            //    options.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
-            //});
-            services.AddScoped<IAuthorRepository, AuthorRepository>();
-            services.AddScoped<IBookRepository, BookRepository>();
-
             services.AddDbContext<LibraryDbContext>(config =>
             {
                 //从appsettings.json里面读节点“DefaultConnection”
-                config.UseMySQL(Configuration.GetConnectionString("DefaultConnection"));
+                config.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
             });
-        }
 
-        private static NewtonsoftJsonPatchInputFormatter GetJsonPatchInputFormatter()
-        {
-            var builder = new ServiceCollection()
-                .AddLogging()
-                .AddMvc()
-                .AddNewtonsoftJson()
-                .Services.BuildServiceProvider();
-
-            return builder
-                .GetRequiredService<IOptions<MvcOptions>>()
-                .Value
-                .InputFormatters
-                .OfType<NewtonsoftJsonPatchInputFormatter>()
-                .First();
+            services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+            services.AddAutoMapper(typeof (Startup));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

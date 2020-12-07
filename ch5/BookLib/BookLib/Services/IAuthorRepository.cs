@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using BookLib.Entities;
 using BookLib.Models;
 
 namespace BookLib.Services
 {
-    public interface IAuthorRepository
+    public interface IAuthorRepository:IRepositoryBase<Author>, IRepositoryBase2<Author,Guid>
     {
-        IEnumerable<AuthorDto> GetAuthors();
-        AuthorDto GetAuthor(Guid authorId);
-        bool IsAuthorExists(Guid authorId);
-        void AddAuthor(AuthorDto author);
-        void DeleteAuthor(AuthorDto author);
+
     }
 }

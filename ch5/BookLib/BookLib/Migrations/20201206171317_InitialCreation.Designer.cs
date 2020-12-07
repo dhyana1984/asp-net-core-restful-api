@@ -3,13 +3,14 @@ using System;
 using BookLib.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BookLib.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20201205183139_InitialCreation")]
+    [Migration("20201206171317_InitialCreation")]
     partial class InitialCreation
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -17,29 +18,30 @@ namespace BookLib.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "3.1.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("BookLib.Entities.Author", b =>
                 {
-                    b.Property<byte[]>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varbinary(16)");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("BirthDate")
-                        .HasColumnType("timestamp");
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("BirthPlace")
                         .IsRequired()
-                        .HasColumnType("varchar(40)")
+                        .HasColumnType("nvarchar(40)")
                         .HasMaxLength(40);
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(20)")
+                        .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
 
                     b.HasKey("Id");
@@ -49,16 +51,15 @@ namespace BookLib.Migrations
 
             modelBuilder.Entity("BookLib.Entities.Book", b =>
                 {
-                    b.Property<byte[]>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varbinary(16)");
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<byte[]>("AuthorId")
-                        .IsRequired()
-                        .HasColumnType("varbinary(16)");
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
-                        .HasColumnType("varchar(500)")
+                        .HasColumnType("nvarchar(500)")
                         .HasMaxLength(500);
 
                     b.Property<int>("Pages")
@@ -66,7 +67,7 @@ namespace BookLib.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasMaxLength(100);
 
                     b.HasKey("Id");
