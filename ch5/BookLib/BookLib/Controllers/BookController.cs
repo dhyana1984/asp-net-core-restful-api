@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper;
+using BookLib.Entities;
+using BookLib.Filter;
 using BookLib.Models;
 using BookLib.Services;
 using Microsoft.AspNetCore.JsonPatch;
@@ -11,135 +15,111 @@ using Microsoft.AspNetCore.Mvc;
 namespace BookLib.Controllers
 {
     [Route("api/authors/{authorId}/books")]
+    [ServiceFilter(typeof(CheckAuthorExistFilterAttribute))] //用此filter必须现在Startup注册到ConfigService中
     public class BookController : ControllerBase
     {
-        public IAuthorRepository AuthorRepository { get; }
-        public IBookRepository BookRepository { get; }
+        public IRepositoryWrapper RepositoryWrapper { get; }
+        public IMapper Mapper { get; }
 
 
-        //public BookController(IBookRepository bookRepository, IAuthorRepository authorRepository)
-        //{
-        //    AuthorRepository = authorRepository;
-        //    BookRepository = bookRepository;
-        //}
+        public BookController(IRepositoryWrapper repositoryWrapper, IMapper mapper)
+        {
+            RepositoryWrapper = repositoryWrapper;
+            Mapper = mapper;
+        }
 
-        //[HttpGet]
-        //public ActionResult<List<BookDto>> GetBooks(Guid authorId)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
+        [HttpGet]
+        public async Task<ActionResult<List<BookDto>>> GetBooksAsync(Guid authorId)
+        {
+            var books = await RepositoryWrapper.Book.GetBooksAsync(authorId);
+            var bookDtoList = Mapper.Map<IEnumerable<BookDto>>(books);
+            return bookDtoList.ToList();
+        }
 
-        //    return BookRepository.GetBooksForAuthor(authorId).ToList();
-        //}
+        [HttpGet("{bookId}", Name = nameof(GetBookAsync))]
+        public async Task<ActionResult<BookDto>> GetBookAsync(Guid authorId, Guid bookId)
+        {
+            var targetBook = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
+            if (targetBook == null)
+            {
+                return NotFound();
+            }
 
-        //[HttpGet("{bookId}", Name = nameof(GetBook))]
-        //public ActionResult<BookDto> GetBook(Guid authorId, Guid bookId)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
+            return Mapper.Map<BookDto>(targetBook);
+        }
 
-        //    var targetBook = BookRepository.GetBookForAuthor(authorId, bookId);
-        //    if (targetBook == null)
-        //    {
-        //        return NotFound();
-        //    }
-            
-        //    return targetBook;
-        //}
+        [HttpPost]
+        public async Task<IActionResult> AddBookAsync(Guid authorId, [FromBody] BookForCreationDto bookForCreationDto)
+        {
+            var newBook = Mapper.Map<Book>(bookForCreationDto);
+            newBook.AuthorId = authorId;
+            RepositoryWrapper.Book.Create(newBook);
+            if(!await RepositoryWrapper.Book.SaveAsync())
+            {
+                throw new Exception("Create resource book failed!");
+            }
+            var bookDto = Mapper.Map<BookDto>(newBook);
+            return CreatedAtRoute(nameof(GetBookAsync), new { authorId = authorId, bookId = newBook.Id }, bookDto);
+        }
 
-        //[HttpPost]
-        ////BookForCreationDto bookForCreationDto需要加[FromBody], authorId是从url传进来的
-        //public IActionResult AddBook(Guid authorId, [FromBody] BookForCreationDto bookForCreationDto)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
+        [HttpDelete("{bookId}")]
+        public async Task<IActionResult> DeleteBookAsync(Guid authorId, Guid bookId)
+        {
+            var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
+            RepositoryWrapper.Book.Delete(book);
+            if (!await RepositoryWrapper.Book.SaveAsync())
+            {
+                throw new Exception("Delete resource book failed!");
+            }
+            return NoContent();//返回204
+        }
 
-        //    var newBook = new BookDto
-        //    {
-        //        Title = bookForCreationDto.Title,
-        //        Description = bookForCreationDto.Description,
-        //        Pages = bookForCreationDto.Pages,
-        //        AuthorId = authorId
-        //    };
+        [HttpPut("{bookId}")] 
+        public async Task<IActionResult> UpdateBookAsync(Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updatedBook)
+        {
+            var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
 
-        //    BookRepository.AddBook(newBook);
-        //    return CreatedAtRoute(nameof(GetBook), new { authorId = authorId, bookId = newBook.Id }, newBook);
-        //}
+            if (book == null)
+            {
+                return NotFound();
+            }
+            //这个重载能将updatedBook map到已经存在的book实体
+            Mapper.Map(updatedBook, book, typeof(BookForUpdateDto), typeof(Book));
+            if (!await RepositoryWrapper.Book.SaveAsync())
+            {
+                throw new Exception("Update resource book failed!");
+            }
+            return NoContent();
+        }
 
-        //[HttpDelete("{bookId}")]
-        //public IActionResult DeleteBook(Guid authorId, Guid bookId)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
+        //JsonPatchDocument<BookForUpdateDto> patchDocument 是JSON Patch文档格式，用HttpPatch请求的时候搭配之用实现部分更新资源
+        [HttpPatch("{bookId}")]
+        public async Task<IActionResult> PartiallyUpdateBookAsync(Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
+        {
+            var book = RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
 
-        //    var book = BookRepository.GetBookForAuthor(authorId, bookId);
+            if (book == null)
+            {
+                return NotFound();
+            }
+            //现将原来的book实体映射到BookForUpdateDto对象
+            var bookUpdateDto = Mapper.Map<BookForUpdateDto>(book);
 
-        //    BookRepository.DeleteBook(book);
-        //    return NoContent();//返回204
-        //}
+            //ApplyTo是将patchDocument中相应的修改操作应用到新建的对象bookToPatch上
+            //错误会被记录到到ModelStateDictionary中，通过ModelState.IsValid判断是否有错误，并且在错误时返回bad request 400
+            patchDocument.ApplyTo(bookUpdateDto, ModelState);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-        //[HttpPut("{bookId}")] //如果用put更新资源，在body里面没有定义的属性会被更新为默认值
-        //public IActionResult UpdateBook(Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updatedBook)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
+            Mapper.Map(bookUpdateDto, book, typeof(BookForUpdateDto), typeof(Book));
+            if (!await RepositoryWrapper.Book.SaveAsync())
+            {
+                throw new Exception("Update resource book failed!");
+            }
+            return NoContent();
 
-        //    var book = BookRepository.GetBookForAuthor(authorId, bookId);
-
-        //    if(book == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    BookRepository.UpdateBook(authorId, bookId, updatedBook);
-        //    return NoContent();
-        //}
-
-        ////JsonPatchDocument<BookForUpdateDto> patchDocument 是JSON Patch文档格式，用HttpPatch请求的时候搭配之用实现部分更新资源
-        //[HttpPatch("{bookId}")]
-        //public IActionResult PartiallyUpdateBook(Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
-        //{
-        //    if (!AuthorRepository.IsAuthorExists(authorId))
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var book = BookRepository.GetBookForAuthor(authorId, bookId);
-
-        //    if (book == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    var bookToPatch = new BookForUpdateDto
-        //    {
-        //        Title = book.Title,
-        //        Description = book.Description,
-        //        Pages = book.Pages
-        //    };
-            
-        //    //ApplyTo是将patchDocument中相应的修改操作应用到新建的对象bookToPatch上
-        //    //错误会被记录到到ModelStateDictionary中，通过ModelState.IsValid判断是否有错误，并且在错误时返回bad request 400
-        //    patchDocument.ApplyTo(bookToPatch, ModelState);
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-
-        //    Console.WriteLine(bookToPatch.Title);
-        //    BookRepository.UpdateBook(authorId, bookId, bookToPatch);
-        //    return NoContent();
-
-        //}
+        }
     }
 }

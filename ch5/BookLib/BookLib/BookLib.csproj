@@ -14,6 +14,7 @@
     <Folder Include="Extensions\" />
     <Folder Include="Migrations\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Filter\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="5.0.0" />
