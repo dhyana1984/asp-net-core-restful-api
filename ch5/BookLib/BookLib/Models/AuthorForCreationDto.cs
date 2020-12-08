@@ -12,6 +12,10 @@ namespace BookLib.Models
         [Range(12,120,ErrorMessage ="Age shoule be 12 to 120")]
         public int Age { get; set; }
 
+        [Required(ErrorMessage = "BirthPlace is mandatory")]
+        [MaxLength(40)]
+        public string BirthPlace { get; set; }
+
         [EmailAddress(ErrorMessage ="Email format is not correct")]
         public string Email { get; set; }
     }

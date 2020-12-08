@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using BookLib.Entities;
 using BookLib.Models;
 using BookLib.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -32,51 +33,51 @@ namespace BookLib.Controllers
             return authorDtoList.ToList();
         }
 
-        //[HttpGet("{authorId}", Name = nameof(GetAuthor))]//在[Route("api/authors")]这个router基础上传入authorId, 即api/authors/xxxxx
-        //public ActionResult<AuthorDto> GetAuthor(Guid authorId)
-        //{
-        //    var author = AuthorRepository.GetAuthor(authorId);
-        //    if (author == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    else
-        //    {
-        //        return author;
-        //    }
-        //}
+        [HttpGet("{authorId}", Name = nameof(CreateAuthorAsync))]//在[Route("api/authors")]这个router基础上传入authorId, 即api/authors/xxxxx
+        public async Task<ActionResult<AuthorDto>> CreateAuthorAsync(Guid authorId)
+        {
+            var author = await RepositoryWrapper.Author.GetByIdAsync(authorId);
+            if (author == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Mapper.Map<AuthorDto>(author);
+            }
+        }
 
-        //[HttpPost]
-        //public IActionResult CreateAuthor(AuthorForCreationDto authorForCreationDto)
-        //{
-        //    var authorDto = new AuthorDto
-        //    {
-        //        Name = authorForCreationDto.Name,
-        //        Age = authorForCreationDto.Age,
-        //        Email = authorForCreationDto.Email
-        //    };
+        [HttpPost]
+        public async Task<IActionResult> CreateAuthorAsync(AuthorForCreationDto authorForCreationDto)
+        {
+            var author = Mapper.Map<Author>(authorForCreationDto);
+            RepositoryWrapper.Author.Create(author);
+            var result = await RepositoryWrapper.Author.SaveAsync();
+            if (!result)
+            {
+                throw new Exception("Create resource author failed!");
+            }
+            var authorCreated = Mapper.Map<AuthorDto>(author);
+            return CreatedAtRoute(nameof(CreateAuthorAsync), new { authorId = authorCreated.Id }, authorCreated);
+        }
 
-        //    AuthorRepository.AddAuthor(authorDto);
+        [HttpDelete("{authorId}")]
+        public async Task<IActionResult> DeleteAuthorAsync(Guid authorId)
+        {
+            var author = await RepositoryWrapper.Author.GetByIdAsync(authorId);
+            if (author == null)
+            {
+                return NotFound();
+            }
+            RepositoryWrapper.Author.Delete(author);
+            var result = await RepositoryWrapper.Author.SaveAsync();
+            if (!result)
+            {
+                throw new Exception("Delete resource failed");
+            }
+            return NoContent();
+        }
 
-        //    //CreatedAtRoute方法是为了在新增authorDto之后返回对应的201状态码并且跳转到GetAuthor的路由
-        //    //第一个参数就是GetAuthor的路由名称，第二个参数是GetAuthor的参数，这两个参数会组合成一个GetAuthor的Api并且在Reponse的Location里面返回
-        //    //第三个参数是authorDto本身，会作为这个Api的结果返回
-        //    return CreatedAtRoute(nameof(GetAuthor), new { authorId = authorDto.Id }, authorDto);
-        //}
 
-        //[HttpDelete("{authorId}")]
-        //public IActionResult DeleteAuthor(Guid authorId)
-        //{
-        //    var author = AuthorRepository.GetAuthor(authorId);
-        //    if(author == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    AuthorRepository.DeleteAuthor(author);
-        //    //删除以后返回NoContent()，即204
-        //    return NoContent();
-        //}
-
-      
     }
 }

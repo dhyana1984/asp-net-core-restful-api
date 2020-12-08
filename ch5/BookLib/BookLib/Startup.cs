@@ -1,6 +1,7 @@
 using System.Linq;
 using AutoMapper;
 using BookLib.Entities;
+using BookLib.Filter;
 using BookLib.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -45,6 +46,7 @@ namespace BookLib
 
             services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
             services.AddAutoMapper(typeof (Startup));
+            services.AddScoped<CheckAuthorExistFilterAttribute>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
