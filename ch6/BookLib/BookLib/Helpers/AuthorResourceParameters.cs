@@ -18,5 +18,9 @@ namespace BookLib.Helpers
                 _pagesize = (value > MaxPageSize) ? MaxPageSize : value;
             }
         }
+
+        public string BirthPlace { get; set; }
+        public string SearchQuery { get; set; }
+        public string SortBy { get; set; }
     }
 }
