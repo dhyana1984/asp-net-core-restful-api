@@ -45,13 +45,19 @@ namespace BookLib.Controllers
                 previousePageLink = pagedList.HasPrevious ? Url.Link(nameof(GetAuthorsAsync), new
                 {
                     pageNumber = pagedList.CurrentPage - 1,
-                    pageSize = pagedList.PageSize
+                    pageSize = pagedList.PageSize,
+                    birthPlace = parameters.BirthPlace,
+                    searchQuery = parameters.SearchQuery,
+                    sortBy = parameters.SortBy
                 }) : null,
                 //下一页的链接
                 nextPageLink = pagedList.HasNext ? Url.Link(nameof(GetAuthorsAsync), new
                 {
                     pageNumber = pagedList.CurrentPage + 1,
-                    pageSize = pagedList.PageSize
+                    pageSize = pagedList.PageSize,
+                    birthPlace = parameters.BirthPlace,
+                    searchQuery = parameters.SearchQuery,
+                    sortBy = parameters.SortBy
                 }) : null
             };
             //将分页的元数据加入到响应的header内,自定义消息头"X-Pagination"
