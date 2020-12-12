@@ -8,6 +8,7 @@ using BookLib.Helpers;
 using BookLib.Models;
 using BookLib.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace BookLib.Controllers
@@ -18,18 +19,24 @@ namespace BookLib.Controllers
     {
         public IRepositoryWrapper RepositoryWrapper { get; }
         public IMapper Mapper { get; }
+        public ILogger<AuthorController> Logger { get; }
 
-        public AuthorController(IRepositoryWrapper repositoryWrapper, IMapper mapper)
+        public AuthorController(
+                IRepositoryWrapper repositoryWrapper,
+                IMapper mapper,
+                ILogger<AuthorController> logger)
         {
             RepositoryWrapper = repositoryWrapper;
             Mapper = mapper;
+            Logger = logger;
         }
 
         [HttpGet(Name = nameof(GetAuthorsAsync))] // nameof(GetAuthorsAsync)一定不能漏，否则rl.Link(nameof(GetAuthorsAsync)会返回null
         public async Task<ActionResult<IEnumerable<AuthorDto>>> GetAuthorsAsync([FromQuery] AuthorResourceParameters parameters)//页码信息从url中取，因为不是resource数据
         {
+            //throw new Exception("test exception filter");
             var pagedList = await RepositoryWrapper.Author.GetAllAsync(parameters);
-
+            Logger.LogWarning(1, parameters.SortBy);
             //匿名对象，包括所有分页的有关信息
             var paginationMetadata = new
             {

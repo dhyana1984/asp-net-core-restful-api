@@ -36,6 +36,9 @@ namespace BookLib
                 config.ReturnHttpNotAcceptable = true;
                 //将xml格式添加到OutputFormatters中，这样api返回时就可以支持请求header中accept是xml的请求
                 config.OutputFormatters.Add(new XmlSerializerOutputFormatter());
+                //将JsonExceptionFilter配置进网站
+                //加这里是全站有效，加载下面 services.AddScoped<CheckAuthorExistFilterAttribute>();是调用[ServiceFilter(typeof(CheckAuthorExistFilterAttribute))]时有效
+                config.Filters.Add<JsonExceptionFilter>();
             });
 
             services.AddDbContext<LibraryDbContext>(config =>
