@@ -7,9 +7,11 @@ using BookLib.Entities;
 using BookLib.Filter;
 using BookLib.Models;
 using BookLib.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Net.Http.Headers;
 
 namespace BookLib.Controllers
 {
@@ -20,15 +22,18 @@ namespace BookLib.Controllers
         public IRepositoryWrapper RepositoryWrapper { get; }
         public IMapper Mapper { get; }
         public IMemoryCache MemoryCache { get; }
+        public IHashFactory HashFactory { get; }
 
         public BookController(
             IRepositoryWrapper repositoryWrapper,
             IMapper mapper,
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IHashFactory hashFactory)
         {
             RepositoryWrapper = repositoryWrapper;
             Mapper = mapper;
             MemoryCache = memoryCache;
+            HashFactory = hashFactory;
         }
 
         [HttpGet]
@@ -66,6 +71,12 @@ namespace BookLib.Controllers
             {
                 return NotFound();
             }
+            string entityHash = HashFactory.GetHash(targetBook);
+            Response.Headers[HeaderNames.ETag] = entityHash;
+            if (Request.Headers.TryGetValue(HeaderNames.IfNoneMatch, out var requestETag) && requestETag == entityHash)
+            {
+                return StatusCode(StatusCodes.Status304NotModified);
+            }
 
             return Mapper.Map<BookDto>(targetBook);
         }
@@ -96,7 +107,8 @@ namespace BookLib.Controllers
             return NoContent();//返回204
         }
 
-        [HttpPut("{bookId}")] 
+        [HttpPut("{bookId}")]
+        [CheckIfMatchHeaderFilter]
         public async Task<IActionResult> UpdateBookAsync(Guid authorId, Guid bookId, [FromBody] BookForUpdateDto updatedBook)
         {
             var book = await RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
@@ -105,17 +117,30 @@ namespace BookLib.Controllers
             {
                 return NotFound();
             }
-            //这个重载能将updatedBook map到已经存在的book实体
+            //判断request中的if-match的etag是否和当前资源的Etag一致，如果不一致的话就返回412，PreconditionFailed,需要客户端重新取一下资源，更新etag
+            //解决了一个请求修改了Book，但是另一个请求直接再次修改Book，这时第二个请求Etag和资源序列化后散列值不匹配，所以返回412状态码，必须先get最新的资源更新etag后再更新资源
+            var entityHash = HashFactory.GetHash(book);
+            if (Request.Headers.TryGetValue(HeaderNames.IfMatch, out var requestETag) && requestETag != entityHash)
+            {
+                return StatusCode(StatusCodes.Status412PreconditionFailed);
+            }
+            //request中的if-match的etag是否和当前资源的Etag一致就更新资源
             Mapper.Map(updatedBook, book, typeof(BookForUpdateDto), typeof(Book));
+            RepositoryWrapper.Book.Update(book);
             if (!await RepositoryWrapper.Book.SaveAsync())
             {
                 throw new Exception("Update resource book failed!");
             }
+
+            //在Response的header中更新etag
+            var entityNewHash = HashFactory.GetHash(book);
+            Response.Headers[HeaderNames.ETag] = entityNewHash;
             return NoContent();
         }
 
         //JsonPatchDocument<BookForUpdateDto> patchDocument 是JSON Patch文档格式，用HttpPatch请求的时候搭配之用实现部分更新资源
         [HttpPatch("{bookId}")]
+        [CheckIfMatchHeaderFilter]
         public async Task<IActionResult> PartiallyUpdateBookAsync(Guid authorId, Guid bookId, [FromBody] JsonPatchDocument<BookForUpdateDto> patchDocument)
         {
             var book = RepositoryWrapper.Book.GetBookAsync(authorId, bookId);
@@ -123,6 +148,11 @@ namespace BookLib.Controllers
             if (book == null)
             {
                 return NotFound();
+            }
+            var entityHash = HashFactory.GetHash(book);
+            if (Request.Headers.TryGetValue(HeaderNames.IfMatch, out var requestETag) && requestETag != entityHash)
+            {
+                return StatusCode(StatusCodes.Status412PreconditionFailed);
             }
             //现将原来的book实体映射到BookForUpdateDto对象
             var bookUpdateDto = Mapper.Map<BookForUpdateDto>(book);
@@ -140,6 +170,8 @@ namespace BookLib.Controllers
             {
                 throw new Exception("Update resource book failed!");
             }
+            var entityNewHash = HashFactory.GetHash(book);
+            Response.Headers[HeaderNames.ETag] = entityNewHash;
             return NoContent();
 
         }

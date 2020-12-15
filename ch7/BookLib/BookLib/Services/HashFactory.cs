@@ -14,9 +14,15 @@ namespace BookLib.Services
     {
         public string GetHash(object entity)
         {
+            //JsonConvert的设置项，这里主要是用ReferenceLoopHandling = ReferenceLoopHandling.Ignore 忽略循环引用，因为Book和Author之间有主外键关系，直接序列化Book会json循环引用错误
+            JsonSerializerSettings setting = new JsonSerializerSettings()
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.None
+            };
             string result = string.Empty;
             //序列化对象
-            var json = JsonConvert.SerializeObject(entity);
+            var json = JsonConvert.SerializeObject(entity, setting);
             //把序列化的字符串转为字节
             var bytes = Encoding.UTF8.GetBytes(json);
 
