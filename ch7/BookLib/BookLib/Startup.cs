@@ -1,4 +1,3 @@
-using System.Linq;
 using AutoMapper;
 using BookLib.Entities;
 using BookLib.Filter;
@@ -7,11 +6,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 
 namespace BookLib
 {
@@ -75,6 +74,28 @@ namespace BookLib
 
             //添加内存中间件服务，然后在controller中注入IMemoryCache接口使用
             services.AddMemoryCache();
+            services.AddApiVersioning(options =>
+            {
+                //client未指明版本时用默认版本，默认是false。如果设为false，当client未指明版本时，会返回400 bad request
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                //定义默认版本，v1.0
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                //是否在http响应header中包含api-supported-versions和api-deprecated-versions这两项
+                options.ReportApiVersions = true;
+                //使用ApiVersionReader.Combine支持多种api version的方式
+                //注意多个地方使用版本的时候，版本要一致否则会报错
+                options.ApiVersionReader = ApiVersionReader.Combine(
+                    //修改访问api version的querystring名称，默认是api-version
+                    new QueryStringApiVersionReader("ver"),
+                    //自定义http消息头访问指定版本的api, 默认是不支持的，需要手工定义
+                    new HeaderApiVersionReader("api-version"),
+                    //通过媒体类型获取api，在header的accept或者content-type指定, 同时存在时优先使用content-type
+                    new MediaTypeApiVersionReader()
+                );
+                options.Conventions.Controller<API.Controllers.V1.ProjectController>().HasApiVersion(new ApiVersion(1, 0));
+                options.Conventions.Controller<API.Controllers.V1.ProjectController>().HasDeprecatedApiVersion(new ApiVersion(1, 0));
+                options.Conventions.Controller<API.Controllers.V2.ProjectController>().HasApiVersion(new ApiVersion(2, 0));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

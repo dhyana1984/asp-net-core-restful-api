@@ -17,6 +17,7 @@ namespace BookLib.Controllers
 {
     [Route("api/authors/{authorId}/books")]
     [ServiceFilter(typeof(CheckAuthorExistFilterAttribute))] //用此filter必须现在Startup注册到ConfigService中
+    [ApiController]
     public class BookController : ControllerBase
     {
         public IRepositoryWrapper RepositoryWrapper { get; }
