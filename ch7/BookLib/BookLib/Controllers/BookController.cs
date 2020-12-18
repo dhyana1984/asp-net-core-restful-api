@@ -37,7 +37,7 @@ namespace BookLib.Controllers
             HashFactory = hashFactory;
         }
 
-        [HttpGet]
+        [HttpGet(Name = nameof(GetBooksAsync))]
         public async Task<ActionResult<List<BookDto>>> GetBooksAsync(Guid authorId)
         {
             var bookDtoList = new List<BookDto>();

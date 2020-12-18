@@ -85,7 +85,7 @@ namespace BookLib.API.Controllers
     [ApiVersion("1.0", Deprecated = true)]//Deprecated = true会在响应的header里面
     [Route("api/[controller]")]
     [ApiController]
-    [NonController] //加了NonController就不再是一个有效api了
+    //[NonController] //加了NonController就不再是一个有效api了
     public class HelloWorldController : Controller
     {
         [HttpGet]
