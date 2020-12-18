@@ -1,7 +1,7 @@
 ﻿using System;
 namespace BookLib.Models
 {
-    public class BookDto
+    public class BookDto : Resource
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
