@@ -1,5 +1,6 @@
 using AutoMapper;
 using BookLib.Entities;
+using BookLib.Extensions;
 using BookLib.Filter;
 using BookLib.Services;
 using Microsoft.AspNetCore.Builder;
@@ -96,6 +97,7 @@ namespace BookLib
                 options.Conventions.Controller<API.Controllers.V1.ProjectController>().HasDeprecatedApiVersion(new ApiVersion(1, 0));
                 options.Conventions.Controller<API.Controllers.V2.ProjectController>().HasApiVersion(new ApiVersion(2, 0));
             });
+            services.AddGraphQLSchemaAndTypes();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
