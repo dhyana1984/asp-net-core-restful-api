@@ -62,7 +62,9 @@ namespace BookLib
             services.AddDbContext<LibraryDbContext>(config =>
             {
                 //从appsettings.json里面读节点“DefaultConnection”
-                config.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+                config.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+                    //使用MigrationsAssembly方法为当前DbContext设置其迁移所在的程序集名称，因为DbContext与为其创建迁移并不在统一程序集
+                    optionBuilder => optionBuilder.MigrationsAssembly(typeof(Startup).Assembly.GetName().Name));
             });
 
             services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
@@ -103,6 +105,10 @@ namespace BookLib
             });
             //添加GraphQL的serivce，这是一个自定义的扩展方法
             services.AddGraphQLSchemaAndTypes();
+            //添加identity服务。AddIdentity会向容器添加UserManager，RoleManager以及它们依赖的服务，并且会添加Identity用到的Cookie认证
+            //所以services.AddIdentity需要添加在services.AddAuthentication之前，避免其认证方式替换JWT Bearer默认方式
+            services.AddIdentity<User, Role>()
+                .AddEntityFrameworkStores<LibraryDbContext>();//AddEntityFrameworkStores 将EF Core中对IUserStore和IRoleStore添加到容器
             //读取appsettings.json中的Security section的Token section, 注意:前后不能有空格
             var tokenSection = Configuration.GetSection("Security:Token");
             //添加JwtBearer中间件的service到容器中， defaultScheme指定当未指定具体认证方案时的默认方案
