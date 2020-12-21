@@ -1,9 +1,10 @@
 ﻿using BookLib.Extentions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BookLib.Entities
 {
-    public class LibraryDbContext : DbContext
+    public class LibraryDbContext : IdentityDbContext<User, Role, string>
     {
         public LibraryDbContext(DbContextOptions<LibraryDbContext> options) : base(options)
         {
