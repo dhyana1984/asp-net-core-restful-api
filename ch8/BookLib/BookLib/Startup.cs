@@ -131,6 +131,8 @@ namespace BookLib
                     ClockSkew = TimeSpan.Zero
                 };
             });
+            //添加数据保护服务
+            services.AddDataProtection();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

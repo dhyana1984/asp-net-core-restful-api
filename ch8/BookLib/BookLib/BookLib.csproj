@@ -17,6 +17,7 @@
     <Folder Include="Filter\" />
     <Folder Include="GraphQLSchema\" />
     <Folder Include="Models\Authorization\" />
+    <Folder Include="Keys\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="5.0.0" />
