@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BookLib.Entities;
 using BookLib.Models.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,7 @@ namespace BookLib.Controllers
         }
 
         [HttpPost("token2", Name = nameof(GenerateTokenAsync))]
+        [EnableCors("AllowAllMethodsPolicy")]
         public async Task<IActionResult> GenerateTokenAsync(LoginUser loginUser)
         {
             //验证用户账号和密码是否正确

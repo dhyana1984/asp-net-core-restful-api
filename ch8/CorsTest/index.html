@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CorsTest</title>
+</head>
+<script src="jquery-3.1.1.min.js"></script>
+<script>
+    const credential = {
+        username: "chris",
+        password: "!234Aa"
+    }
+    $.ajax({
+        method: 'POST',
+        url: "http://192.168.2.93:5000/auth/token2", //get token
+        data: JSON.stringify(credential),
+        success: (result) => {
+            console.log(`token got: ${result.token}`)
+            $.ajax({
+                url: "http://192.168.2.93:5000/api/authors/83344bba-ffb2-425d-4d05-08d8a76e6476", //delete the resource. OPTION request will send first
+                method: 'DELETE',
+                success: () => console.log("deleted successfully"),
+                headers: {
+                    "Authorization": `Bearer ${result.token}`   //put token in the header
+                }
+            })
+        },
+        contentType: "application/json",
+        dataType: 'json'
+    })
+
+    $.get(
+        "http://192.168.2.93:5000/api/values", //Simple CORS request
+        {},
+        (result) => console.log(result[1].name)
+    )
+</script>
+
+<body>
+
+</body>
+
+</html>

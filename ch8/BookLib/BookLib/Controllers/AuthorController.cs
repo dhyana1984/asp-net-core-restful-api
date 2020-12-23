@@ -8,6 +8,7 @@ using BookLib.Helpers;
 using BookLib.Models;
 using BookLib.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ namespace BookLib.Controllers
 {
     [Route("api/authors")] //指定该controller的路由地址
     [ApiController] //该属性是在core2.1中添加的特性，有些方便功能，比如自动模型验证，action参数来源推断等
+    [EnableCors("AllowAllMethodsPolicy")] //为controller添加cors，此时应将cors中间件从startup.cs移除，AllowAllMethodsPolicy策略是在startup的Service里面定义的
     [Authorize]
     public class AuthorController : ControllerBase
     {
@@ -87,6 +89,7 @@ namespace BookLib.Controllers
         //[ResponseCache(Duration = 60)] //为请求加了缓存，60秒失效，在响应的header里面会有cache-control max-age = 60
         [ResponseCache(CacheProfileName = "Default")]//"Default"是在StartUp中配置的
         [HttpGet("{authorId}", Name = nameof(GetAuthorAsync))]//在[Route("api/authors")]这个router基础上传入authorId, 即api/authors/xxxxx
+        [DisableCors] //在Controller上打开Cors，但是在单独Action上关闭Cors
         public async Task<ActionResult<AuthorDto>> GetAuthorAsync(Guid authorId)
         {
             var author = await RepositoryWrapper.Author.GetByIdAsync(authorId);

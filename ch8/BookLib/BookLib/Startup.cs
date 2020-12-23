@@ -133,6 +133,22 @@ namespace BookLib
             });
             //添加数据保护服务
             services.AddDataProtection();
+            //添加CORS服务, 可以通过option参数配置策略
+            services.AddCors(option=>
+            {
+                //设置允许跨域请求携带的header
+                var allowHeaders = new string[] { "Content-Type", "Authorization" };
+                //设置跨域请求策略
+                option.AddPolicy("AllowAllMethodsPolicy", builder => builder
+                    .WithOrigins("http://192.168.2.90:6001")        //设置允许跨域请求的域
+                    .WithHeaders(allowHeaders)                      //设置跨域请求的header
+                    .AllowAnyMethod());                             //设置跨域请求所有http方法都允许
+
+                option.AddPolicy("AllowAllOriginPolicy", builder => builder.AllowAnyOrigin());
+
+                //当在Configure中没有指明策略名的时候，用此默认策略
+                option.AddDefaultPolicy(builder => builder.WithOrigins("http://192.168.2.90:6001"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -151,6 +167,12 @@ namespace BookLib
 
             //配置认证功能
             app.UseAuthentication();
+
+            //WithOrigins限定访问源。在此配置CORS策略，同样还有WithMethods和WithHeaders
+            //app.UseCors(builder => builder.WithOrigins("http://192.168.2.90:6001"));
+
+            //AllowAllMethodsPolicy策略是在services中配置的
+            //app.UseCors("AllowAllMethodsPolicy");
 
             app.UseMvc();
 
