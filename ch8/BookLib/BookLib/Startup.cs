@@ -4,6 +4,7 @@ using AutoMapper;
 using BookLib.Entities;
 using BookLib.Extensions;
 using BookLib.Filter;
+using BookLib.Middleware;
 using BookLib.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -173,6 +174,9 @@ namespace BookLib
 
             //AllowAllMethodsPolicy策略是在services中配置的
             //app.UseCors("AllowAllMethodsPolicy");
+
+            //使用自定义限流中间件
+            app.UseMiddleware<RequestRateLimitingMiddleware>();
 
             app.UseMvc();
 
